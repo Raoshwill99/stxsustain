@@ -1,4 +1,4 @@
-# STX for Sustainability: Real-World Environmental Solutions
+# STX 4 Sustainability: Real-World Environmental Solutions
 
 ## Overview
 
