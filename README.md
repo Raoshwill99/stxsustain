@@ -1,8 +1,8 @@
-# STX 4 Sustainability: Real-World Environmental Impact Solutions
+# STX for Sustainability: Real-World Environmental Impact Solutions
 
 ## Overview
 
-STX for Sustainability is a blockchain-based solution built on the Stacks ecosystem, aiming to create a framework for funding and incentivizing environmental projects using STX. By tokenizing carbon credits, supporting sustainable practices, providing a marketplace for trading, and integrating real-world data, this project promotes ecological responsibility while enhancing the value of STX.
+STX for Sustainability is a blockchain-based solution built on the Stacks ecosystem, aiming to create a framework for funding and incentivizing environmental projects using STX. By tokenizing carbon credits, supporting sustainable practices, providing a marketplace for trading, integrating real-world data, and now implementing a governance system, this project promotes ecological responsibility while enhancing the value of STX.
 
 ## Features
 
@@ -11,12 +11,13 @@ STX for Sustainability is a blockchain-based solution built on the Stacks ecosys
 - Transfer verified carbon credits between users
 - Marketplace for listing and trading carbon credits
 - Integration with real-world data sources for carbon offset projects
+- Governance system for community-driven decision making
 - Track total carbon credits in the system
 - Manage verifiers for credit validation and data sources for project input
 
 ## Smart Contract
 
-The core of this project is a Clarity smart contract that manages carbon credits, facilitates a marketplace, and integrates real-world project data. Here are the main functions:
+The core of this project is a Clarity smart contract that manages carbon credits, facilitates a marketplace, integrates real-world project data, and implements a governance system. Here are the main functions:
 
 ### Carbon Credit Management
 - `register-carbon-credits`: Allow users to register new carbon credits tied to specific projects
@@ -35,6 +36,11 @@ The core of this project is a Clarity smart contract that manages carbon credits
 - `cancel-listing`: Cancel an existing listing
 - `buy-credits`: Purchase credits from an existing listing
 
+### Governance Functions
+- `create-proposal`: Create a new proposal for community voting
+- `vote`: Cast a vote on an active proposal
+- `finalize-proposal`: Finalize a proposal after its voting period ends
+
 ### Read-only Functions
 - `get-carbon-credits`: Retrieve the carbon credit balance for a given account
 - `get-total-carbon-credits`: Get the total number of verified carbon credits in the system
@@ -44,6 +50,8 @@ The core of this project is a Clarity smart contract that manages carbon credits
 - `get-all-listings`: Retrieve all active listings in the marketplace
 - `get-project-data`: Retrieve data for a specific project
 - `get-credit-projects`: Get the projects associated with an account's credits
+- `get-proposal`: Get details of a specific proposal
+- `get-vote`: Check the vote of a specific user on a specific proposal
 
 ## Getting Started
 
@@ -87,23 +95,25 @@ To deploy the contract to the Stacks testnet:
 
 Interact with the contract using the Stacks CLI or integrate it into your Stacks-based application.
 
-Example of inputting project data (for authorized data sources):
+Example of creating a proposal:
 
 ```
-stx call input-project-data project-id u1 carbon-reduction u1000 --fee 1000 --nonce 0
+stx call create-proposal title "New Verifier" description "Propose to add a new verifier" link none duration u1440 --fee 1000 --nonce 0
 ```
 
-Example of registering carbon credits:
+Example of voting on a proposal:
 
 ```
-stx call register-carbon-credits amount u100 project-data-id u1 --fee 1000 --nonce 1
+stx call vote proposal-id u1 vote-bool true --fee 1000 --nonce 1
 ```
 
-Example of creating a listing to sell carbon credits:
+## Governance Process
 
-```
-stx call create-listing amount u50 price u1000000 --fee 1000 --nonce 2
-```
+1. Any user can create a proposal for community consideration.
+2. Proposals have a minimum duration to ensure sufficient time for community participation.
+3. Users can vote 'yes' or 'no' on active proposals.
+4. After the voting period ends, anyone can call to finalize the proposal.
+5. Proposals are marked as 'passed' or 'rejected' based on the voting results.
 
 ## Project Data Integration Process
 
@@ -131,17 +141,17 @@ stx call create-listing amount u50 price u1000000 --fee 1000 --nonce 2
 - [x] Add verification system for carbon credits
 - [x] Create a marketplace for trading verified carbon credits
 - [x] Integrate with real-world data sources for carbon offset projects
-- [ ] Implement governance mechanisms for project approval and fund allocation
+- [x] Implement governance mechanisms for community-driven decision making
 - [ ] Add incentive structures for participants
 - [ ] Develop front-end interfaces for data providers and users
 
 ## Contributing
 
-We welcome contributions to the STX for Sustainability project. Please feel free to submit issues, create pull requests or contribute in any other way.
+Contributions to this project are welcome. Please ensure you follow the coding standards and submit pull requests for any new features or bug fixes.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License
 
 ## Contact
 

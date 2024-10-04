@@ -1,5 +1,5 @@
 ;; STX for Sustainability: Real-World Environmental Impact Solutions
-;; Fourth iteration: Complete Real-World Data Integration
+;; Fifth iteration: Complete Governance Implementation
 
 ;; Define constants
 (define-constant contract-owner tx-sender)
@@ -12,11 +12,16 @@
 (define-constant err-price-mismatch (err u106))
 (define-constant err-invalid-data-source (err u107))
 (define-constant err-project-mismatch (err u108))
+(define-constant err-proposal-not-found (err u109))
+(define-constant err-voting-period-ended (err u110))
+(define-constant err-already-voted (err u111))
+(define-constant min-proposal-duration u144) ;; Minimum 1 day (in blocks, assuming 10-minute block time)
 
 ;; Define data variables
 (define-data-var total-carbon-credits uint u0)
 (define-data-var listing-nonce uint u0)
 (define-data-var project-nonce uint u0)
+(define-data-var proposal-nonce uint u0)
 
 ;; Define data maps
 (define-map carbon-credits principal 
@@ -28,6 +33,17 @@
 (define-map project-data uint 
   { project-id: uint, carbon-reduction: uint, timestamp: uint, remaining-credits: uint })
 (define-map credit-to-project principal (list 200 { credit-amount: uint, project-id: uint }))
+(define-map proposals uint 
+  { proposer: principal, 
+    title: (string-ascii 50), 
+    description: (string-ascii 500),
+    link: (optional (string-utf8 256)),
+    start-block: uint,
+    end-block: uint,
+    yes-votes: uint,
+    no-votes: uint,
+    status: (string-ascii 20) })
+(define-map votes { proposal-id: uint, voter: principal } bool)
 
 ;; Verifier management functions
 (define-public (set-verifier (new-verifier principal))
@@ -143,6 +159,43 @@
       (merge recipient-data { verified: (+ (get verified recipient-data) amount) }))
     (ok true)))
 
+;; Governance functions
+(define-public (create-proposal (title (string-ascii 50)) (description (string-ascii 500)) (link (optional (string-utf8 256))) (duration uint))
+  (let ((proposal-id (var-get proposal-nonce))
+        (start-block block-height)
+        (end-block (+ block-height (max duration min-proposal-duration))))
+    (map-set proposals proposal-id
+      { proposer: tx-sender,
+        title: title,
+        description: description,
+        link: link,
+        start-block: start-block,
+        end-block: end-block,
+        yes-votes: u0,
+        no-votes: u0,
+        status: "active" })
+    (var-set proposal-nonce (+ proposal-id u1))
+    (ok proposal-id)))
+
+(define-public (vote (proposal-id uint) (vote-bool bool))
+  (let ((proposal (unwrap! (map-get? proposals proposal-id) err-proposal-not-found))
+        (voter tx-sender))
+    (asserts! (<= block-height (get end-block proposal)) err-voting-period-ended)
+    (asserts! (is-none (map-get? votes { proposal-id: proposal-id, voter: voter })) err-already-voted)
+    (map-set votes { proposal-id: proposal-id, voter: voter } vote-bool)
+    (if vote-bool
+      (map-set proposals proposal-id (merge proposal { yes-votes: (+ (get yes-votes proposal) u1) }))
+      (map-set proposals proposal-id (merge proposal { no-votes: (+ (get no-votes proposal) u1) })))
+    (ok true)))
+
+(define-public (finalize-proposal (proposal-id uint))
+  (let ((proposal (unwrap! (map-get? proposals proposal-id) err-proposal-not-found)))
+    (asserts! (> block-height (get end-block proposal)) err-voting-period-ended)
+    (if (> (get yes-votes proposal) (get no-votes proposal))
+      (map-set proposals proposal-id (merge proposal { status: "passed" }))
+      (map-set proposals proposal-id (merge proposal { status: "rejected" })))
+    (ok true)))
+
 ;; Read-only functions
 (define-read-only (get-carbon-credits (account principal))
   (map-get? carbon-credits account))
@@ -171,3 +224,9 @@
 
 (define-read-only (get-credit-projects (account principal))
   (map-get? credit-to-project account))
+
+(define-read-only (get-proposal (proposal-id uint))
+  (map-get? proposals proposal-id))
+
+(define-read-only (get-vote (proposal-id uint) (voter principal))
+  (map-get? votes { proposal-id: proposal-id, voter: voter }))
